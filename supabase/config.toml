@@ -1,0 +1,7 @@
+project_id = "your-project-ref"
+
+[api]
+enabled = true
+
+[functions.process-reminders]
+verify_jwt = false
