@@ -7,7 +7,7 @@ Private mobile-first PWA to track daily exercise, healthy eating, and weekly wei
 - **Next.js** (App Router) on **Vercel**
 - **Supabase** Auth + Postgres + RLS
 - **Web Push** (works on iPhone only after **Add to Home Screen**, iOS 16.4+)
-- **Vercel Cron** (or Supabase Cron) every 10 minutes to finalize missed days and send reminders
+- **Supabase Cron** every 10 minutes (primary) + **Vercel Cron** once daily (Hobby-compatible backup) to finalize missed days and send reminders
 
 ## Features
 
@@ -64,12 +64,14 @@ Limitations: iOS Focus modes, notification permission, and Home Screen install a
 
 1. Push this repo and import into Vercel.
 2. Set environment variables from `.env.example` (including `SUPABASE_SERVICE_ROLE_KEY`, VAPID keys, `CRON_SECRET`).
-3. Deploy. `vercel.json` schedules `/api/cron/process-reminders` every 10 minutes.
-4. Optionally schedule Supabase Cron to also call that URL with:
+3. Deploy. On **Vercel Hobby**, `vercel.json` runs `/api/cron/process-reminders` **once per day** (21:00 UTC) as a backup — Hobby cannot run crons more than once daily.
+4. For multiple reminders per day, schedule **Supabase Cron** every 10 minutes:
 
-   `Authorization: Bearer <CRON_SECRET>`
+   - Open Supabase → SQL editor
+   - Edit and run [`supabase/cron-process-reminders.sql`](supabase/cron-process-reminders.sql)
+   - Replace `YOUR_APP.vercel.app` and `YOUR_CRON_SECRET` with your real values (same `CRON_SECRET` as in Vercel)
 
-   Or deploy [`supabase/functions/process-reminders`](supabase/functions/process-reminders) with `SITE_CRON_URL` pointing at your Vercel cron route.
+   That POSTs to your app with `Authorization: Bearer <CRON_SECRET>` and is what actually powers daytime reminders on Hobby.
 
 5. Create your private account via `/signup`. Restrict signups in Supabase if you want (disable public signups after creating your user).
 
@@ -84,6 +86,7 @@ Limitations: iOS Focus modes, notification permission, and Home Screen install a
 - [ ] Settings saves timezone + reminder times
 - [ ] PWA installs on Home Screen
 - [ ] Notifications permission + test push received
+- [ ] Supabase Cron job `discipline-process-reminders` is scheduled
 - [ ] After midnight (timezone), pending yesterday becomes failure (cron or next open)
 
 ## Scripts
